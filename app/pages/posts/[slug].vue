@@ -17,6 +17,13 @@ if (!post.value) {
   })
 }
 
+usePageSeo({
+  title: post.value.title,
+  description: post.value.excerpt || `${post.value.title} - 渐晚技术博客文章。`,
+  path: `/posts/${post.value.slug}`,
+  type: 'article'
+})
+
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',

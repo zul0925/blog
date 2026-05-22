@@ -4,10 +4,28 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
+  app: {
+    head: {
+      htmlAttrs: {
+        lang: 'zh-CN'
+      },
+      titleTemplate: (title) => title ? `${title} | 渐晚` : '渐晚',
+      meta: [
+        { name: 'theme-color', content: '#2563eb' },
+        { name: 'robots', content: 'index, follow' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/logo-jianwan.png' }
+      ]
+    }
+  },
   runtimeConfig: {
     databaseUrl: '',
     adminUsername: 'admin',
     adminPassword: 'blog2026',
-    adminSessionSecret: ''
+    adminSessionSecret: '',
+    public: {
+      siteUrl: ''
+    }
   }
 })
