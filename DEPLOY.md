@@ -442,9 +442,17 @@ jobs:
           script: |
             set -e
 
+            mkdir -p /www/wwwroot/blog
             git config --global --add safe.directory /www/wwwroot/blog
 
             cd /www/wwwroot/blog
+
+            if [ ! -d .git ]; then
+              git init
+              git remote add origin https://github.com/zul0925/blog.git
+            else
+              git remote set-url origin https://github.com/zul0925/blog.git
+            fi
 
             git fetch origin master
             git reset --hard origin/master
