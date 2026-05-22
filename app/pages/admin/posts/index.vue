@@ -137,14 +137,14 @@ const deletePost = async (post: Post) => {
               </td>
               <td class="px-5 py-4 text-slate-600">{{ formatDate(post.updatedAt) }}</td>
               <td class="px-5 py-4">
-                <div class="flex gap-3">
-                  <NuxtLink class="font-bold text-blue-600" :to="`/admin/posts/${post.id}`">
+                <div class="flex flex-wrap items-center gap-2">
+                  <NuxtLink class="inline-flex h-8 items-center justify-center rounded-md border border-blue-100 bg-blue-50 px-3 text-xs font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100" :to="`/admin/posts/${post.id}`">
                     编辑
                   </NuxtLink>
-                  <NuxtLink v-if="post.status === 'published'" class="font-bold text-slate-500" :to="`/posts/${post.slug}`">
+                  <NuxtLink v-if="post.status === 'published'" class="inline-flex h-8 items-center justify-center rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700" :to="`/posts/${post.slug}`">
                     预览
                   </NuxtLink>
-                  <button class="font-bold text-red-600" type="button" @click="deletePost(post)">
+                  <button class="inline-flex h-8 items-center justify-center rounded-md border border-red-100 bg-red-50 px-3 text-xs font-bold text-red-700 transition hover:border-red-200 hover:bg-red-100" type="button" @click="deletePost(post)">
                     删除
                   </button>
                 </div>
