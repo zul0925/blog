@@ -435,6 +435,8 @@ jobs:
             git reset --hard origin/master
 
             yarn install --frozen-lockfile
+            chmod +x node_modules/drizzle-kit/node_modules/@esbuild/linux-x64/bin/esbuild
+            chmod +x node_modules/@esbuild/linux-x64/bin/esbuild || true
             yarn db:migrate
             NODE_OPTIONS="--max-old-space-size=2048" yarn build
 
