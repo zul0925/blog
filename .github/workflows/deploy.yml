@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Aliyun BT server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          port: ${{ secrets.ALIYUN_PORT }}
+          script: |
+            set -e
+
+            cd /www/wwwroot/blog
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            set -a
+            source .env
+            set +a
+
+            yarn install --frozen-lockfile
+            yarn db:migrate
+            NODE_OPTIONS="--max-old-space-size=2048" yarn build
+
+            NODE_ENV=production PORT=3000 pm2 restart blog --update-env
+            pm2 save
