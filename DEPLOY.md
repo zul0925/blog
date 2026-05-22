@@ -53,7 +53,7 @@ PostgreSQL
 PM2 管理器（可选）
 ```
 
-Node.js 建议使用 20 或 22。
+Node.js 建议使用 24.11.0 或兼容版本。Nuxt 4.4.6 要求 Node `^20.19.0 || ^22.12.0 || ^24.11.0 || >=26.0.0`，GitHub Actions 构建环境需要满足这个版本要求。
 
 如果已经通过宝塔安装了 Node，不要再用 `apt install nodejs` 安装另一套 Node，避免环境混乱。
 
@@ -266,7 +266,7 @@ NODE_ENV=production PORT=3000 pm2 restart blog --update-env
 项目目录：/www/wwwroot/blog
 启动文件：.output/server/index.mjs
 项目端口：3000
-Node 版本：20 或 22
+Node 版本：24.11.0 或兼容版本
 运行环境：production
 ```
 
@@ -423,7 +423,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24.11.0
           cache: yarn
 
       - name: Install dependencies
@@ -571,7 +571,7 @@ SSL 配置
 ## 部署检查清单
 
 - 服务器已安装 Git
-- Node.js 20 或 22 可用
+- Node.js 24.11.0 或兼容版本可用
 - Yarn 可用
 - PostgreSQL 已启动
 - 数据库和用户已创建
