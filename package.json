@@ -1,0 +1,28 @@
+{
+  "name": "blog",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.7.1",
+    "drizzle-orm": "^0.45.2",
+    "nuxt": "^4.4.6",
+    "postgres": "^3.4.9",
+    "vue": "^3.5.34",
+    "vue-router": "^5.0.7",
+    "zod": "^4.4.3"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
+  }
+}
