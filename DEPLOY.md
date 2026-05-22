@@ -457,6 +457,11 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
 
+            if [ ! -f .env ]; then
+              echo "Missing /www/wwwroot/blog/.env. Create it on the server before deploying."
+              exit 1
+            fi
+
             set -a
             source .env
             set +a
@@ -488,6 +493,11 @@ jobs:
             set -e
 
             cd /www/wwwroot/blog
+
+            if [ ! -f .env ]; then
+              echo "Missing /www/wwwroot/blog/.env. Create it on the server before deploying."
+              exit 1
+            fi
 
             set -a
             source .env
