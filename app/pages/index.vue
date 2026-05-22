@@ -2,7 +2,6 @@
 import type { PostsResponse } from '~/types/post'
 
 usePageSeo({
-  title: '首页',
   description: '渐晚是一个记录 Nuxt、Vue、数据库、后台系统和个人项目实践的技术博客。',
   path: '/'
 })

@@ -9,7 +9,7 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'zh-CN'
       },
-      titleTemplate: (title) => title ? `${title} | 渐晚Blog` : '渐晚Blog',
+      titleTemplate: (title) => title ? `渐晚Blog - ${title}` : '渐晚Blog',
       meta: [
         { name: 'theme-color', content: '#2563eb' },
         { name: 'robots', content: 'index, follow' }
