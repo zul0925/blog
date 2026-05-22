@@ -10,7 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Aliyun BT server
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Nuxt app
+        run: yarn build
+
+      - name: Prepare server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.ALIYUN_HOST }}
@@ -34,7 +49,33 @@ jobs:
             yarn install --frozen-lockfile
             find node_modules -path '*/@esbuild/linux-x64/bin/esbuild' -type f -exec chmod +x {} \;
             yarn db:migrate
-            NODE_OPTIONS="--max-old-space-size=2048" yarn build
+
+      - name: Upload build output
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          port: ${{ secrets.ALIYUN_PORT }}
+          source: ".output"
+          target: "/www/wwwroot/blog"
+          rm: true
+
+      - name: Restart server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          port: ${{ secrets.ALIYUN_PORT }}
+          script: |
+            set -e
+
+            cd /www/wwwroot/blog
+
+            set -a
+            source .env
+            set +a
 
             NODE_ENV=production PORT=3000 pm2 restart blog --update-env
             pm2 save

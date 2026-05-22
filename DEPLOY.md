@@ -22,7 +22,7 @@
 -> 拉取最新代码
 -> 安装依赖
 -> 执行数据库迁移
--> 构建 Nuxt
+-> 上传 GitHub Actions 构建好的 .output
 -> 重启服务
 ```
 
@@ -402,7 +402,7 @@ ALIYUN_SSH_KEY    aliyun_deploy_key 私钥内容
 .github/workflows/deploy.yml
 ```
 
-如果使用 PM2，内容如下：
+如果使用 PM2，内容如下。这个版本是在 GitHub Actions 机器上构建 Nuxt，服务器只负责拉代码、迁移数据库、接收 `.output` 和重启服务：
 
 ```yaml
 name: Deploy
@@ -417,7 +417,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Aliyun BT server
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Nuxt app
+        run: yarn build
+
+      - name: Prepare server
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.ALIYUN_HOST }}
@@ -434,10 +449,40 @@ jobs:
             git fetch origin master
             git reset --hard origin/master
 
+            set -a
+            source .env
+            set +a
+
             yarn install --frozen-lockfile
             find node_modules -path '*/@esbuild/linux-x64/bin/esbuild' -type f -exec chmod +x {} \;
             yarn db:migrate
-            NODE_OPTIONS="--max-old-space-size=2048" yarn build
+
+      - name: Upload build output
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          port: ${{ secrets.ALIYUN_PORT }}
+          source: ".output"
+          target: "/www/wwwroot/blog"
+          rm: true
+
+      - name: Restart server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ALIYUN_HOST }}
+          username: ${{ secrets.ALIYUN_USER }}
+          key: ${{ secrets.ALIYUN_SSH_KEY }}
+          port: ${{ secrets.ALIYUN_PORT }}
+          script: |
+            set -e
+
+            cd /www/wwwroot/blog
+
+            set -a
+            source .env
+            set +a
 
             NODE_ENV=production PORT=3000 pm2 restart blog --update-env
             pm2 save
@@ -464,12 +509,12 @@ git push origin master
 推送后 GitHub Actions 会自动：
 
 ```text
+在 GitHub Actions 机器上构建 Nuxt
 登录服务器
-拉取最新代码
-安装依赖
+拉取最新代码并安装依赖
 执行数据库迁移
-构建 Nuxt
-重启服务
+上传 .output 到服务器
+重启 PM2 服务
 ```
 
 ## 十二、常见问题
