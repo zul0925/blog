@@ -36,7 +36,7 @@ const formatDate = (value: string) =>
         <p class="text-sm font-bold text-blue-600 dark:text-blue-300">Articles</p>
         <h1 class="mt-3 text-4xl font-bold text-slate-950 dark:text-white">技术文章</h1>
         <p class="mt-4 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-          聚焦 Nuxt 全栈、数据库建模、后台系统和个人项目建设。
+          聚焦 Nuxt 全栈、数据库建模、后台系统和个人项目建设1。
         </p>
       </div>
     </section>
