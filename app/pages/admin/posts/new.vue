@@ -8,14 +8,8 @@ definePageMeta({
 const title = ref('')
 const excerpt = ref('')
 const content = ref('')
-const status = ref<PostStatus>('draft')
 const pending = ref(false)
 const errorMessage = ref('')
-
-const statusOptions = [
-  { label: '草稿', value: 'draft' },
-  { label: '已发布', value: 'published' }
-] as const
 
 const savePost = async (nextStatus: PostStatus) => {
   pending.value = true
@@ -57,7 +51,7 @@ const savePost = async (nextStatus: PostStatus) => {
       {{ errorMessage }}
     </p>
 
-    <form class="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]" @submit.prevent="savePost(status)">
+    <form class="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]" @submit.prevent="savePost('draft')">
       <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 px-5 py-4">
           <h2 class="font-bold text-slate-950">文章内容</h2>
@@ -86,26 +80,6 @@ const savePost = async (nextStatus: PostStatus) => {
           <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
             系统会根据标题自动生成文章访问地址，重复时会自动追加编号。
           </div>
-          <label class="grid gap-2 text-sm font-bold text-slate-700">
-            状态
-            <USelect
-              v-model="status"
-              class="w-full !bg-white !text-slate-700 !ring-slate-200 hover:!bg-white focus:!ring-blue-400 dark:!bg-white dark:!text-slate-700 dark:!ring-slate-200 dark:hover:!bg-white"
-              color="neutral"
-              :items="statusOptions"
-              label-key="label"
-              :ui="{
-                base: '!bg-white !text-slate-700 !ring-slate-200 hover:!bg-white dark:!bg-white dark:!text-slate-700 dark:!ring-slate-200',
-                content: '!bg-white !text-slate-700 !ring-slate-200 dark:!bg-white dark:!text-slate-700 dark:!ring-slate-200',
-                item: '!text-slate-700 dark:!text-slate-700 data-highlighted:before:!bg-blue-50 dark:data-highlighted:before:!bg-blue-50',
-                itemLabel: '!text-slate-700 dark:!text-slate-700',
-                trailingIcon: '!text-slate-400 dark:!text-slate-400',
-                value: '!text-slate-700 dark:!text-slate-700'
-              }"
-              value-key="value"
-              variant="outline"
-            />
-          </label>
           <button class="h-10 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="pending" type="button" @click="savePost('draft')">
             {{ pending ? '保存中...' : '保存草稿' }}
           </button>

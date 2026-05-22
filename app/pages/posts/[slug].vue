@@ -1,21 +1,6 @@
 <script setup lang="ts">
+import { Renderer, lexer, marked, type Token, type Tokens } from 'marked'
 import type { PostResponse } from '~/types/post'
-
-type ContentBlock =
-  | {
-      type: 'heading'
-      id: string
-      level: 2 | 3 | 4
-      text: string
-    }
-  | {
-      type: 'text'
-      text: string
-    }
-  | {
-      type: 'space'
-      id: string
-    }
 
 type TocItem = {
   id: string
@@ -53,6 +38,32 @@ const formatDate = (value: string) =>
     day: '2-digit'
   }).format(new Date(value))
 
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const escapeAttribute = (value: string) => escapeHtml(value).replace(/`/g, '&#96;')
+
+const isSafeUrl = (value: string) => {
+  if (!value) {
+    return false
+  }
+
+  if (value.startsWith('/') || value.startsWith('#')) {
+    return true
+  }
+
+  try {
+    return ['http:', 'https:', 'mailto:'].includes(new URL(value).protocol)
+  } catch {
+    return false
+  }
+}
+
 const normalizeHeadingText = (value: string) =>
   value
     .replace(/`([^`]+)`/g, '$1')
@@ -61,60 +72,92 @@ const normalizeHeadingText = (value: string) =>
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .trim()
 
-const parsedContent = computed(() => {
-  const blocks: ContentBlock[] = []
-  const toc: TocItem[] = []
-  const usedIds = new Map<string, number>()
-  const lines = post.value?.content.split(/\r?\n/) ?? []
+const flattenText = (tokens: Token[] = []): string =>
+  tokens
+    .map((token) => {
+      if ('tokens' in token && Array.isArray(token.tokens)) {
+        return flattenText(token.tokens)
+      }
 
-  lines.forEach((line, index) => {
-    const heading = line.match(/^(#{1,4})\s+(.+)$/)
+      if ('text' in token && typeof token.text === 'string') {
+        return token.text
+      }
 
-    if (heading) {
-      const rawLevel = heading[1].length
-      const level = Math.min(Math.max(rawLevel, 2), 4) as 2 | 3 | 4
-      const text = normalizeHeadingText(heading[2])
-      const baseId = `section-${toc.length + 1}`
-      const usedCount = usedIds.get(baseId) ?? 0
-      const id = usedCount ? `${baseId}-${usedCount + 1}` : baseId
-
-      usedIds.set(baseId, usedCount + 1)
-      blocks.push({
-        type: 'heading',
-        id,
-        level,
-        text
-      })
-      toc.push({
-        id,
-        level,
-        text
-      })
-      return
-    }
-
-    if (!line.trim()) {
-      blocks.push({
-        type: 'space',
-        id: `space-${index}`
-      })
-      return
-    }
-
-    blocks.push({
-      type: 'text',
-      text: line
+      return ''
     })
+    .join('')
+
+const extractTocItems = (content: string) => {
+  const toc: TocItem[] = []
+  const tokens = lexer(content, {
+    gfm: true
   })
 
-  return {
-    blocks,
-    toc
-  }
-})
+  tokens.forEach((token) => {
+    if (token.type === 'heading') {
+      const heading = token as Tokens.Heading
+      const level = Math.min(Math.max(heading.depth, 2), 4) as 2 | 3 | 4
+      const text = normalizeHeadingText(flattenText(heading.tokens) || heading.text)
 
-const contentBlocks = computed(() => parsedContent.value.blocks)
-const tocItems = computed(() => parsedContent.value.toc)
+      toc.push({
+        id: `section-${toc.length + 1}`,
+        level,
+        text
+      })
+    }
+  })
+
+  return toc
+}
+
+const renderMarkdown = (content: string) => {
+  const renderer = new Renderer()
+  let headingIndex = 0
+
+  renderer.heading = function ({ tokens, depth }) {
+    const level = Math.min(Math.max(depth, 2), 4)
+    const id = `section-${headingIndex + 1}`
+    const text = this.parser.parseInline(tokens)
+
+    headingIndex += 1
+
+    return `<h${level} id="${id}">${text}</h${level}>`
+  }
+
+  renderer.html = ({ text }) => escapeHtml(text)
+
+  renderer.link = function ({ href, title, tokens }) {
+    if (!isSafeUrl(href)) {
+      return this.parser.parseInline(tokens)
+    }
+
+    const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : ''
+    const isExternal = /^https?:\/\//i.test(href)
+    const targetAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''
+
+    return `<a href="${escapeAttribute(href)}"${titleAttribute}${targetAttributes}>${this.parser.parseInline(tokens)}</a>`
+  }
+
+  renderer.image = ({ href, title, text }) => {
+    if (!isSafeUrl(href)) {
+      return escapeHtml(text)
+    }
+
+    const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : ''
+
+    return `<img src="${escapeAttribute(href)}" alt="${escapeAttribute(text)}"${titleAttribute}>`
+  }
+
+  return marked(content, {
+    async: false,
+    breaks: true,
+    gfm: true,
+    renderer
+  })
+}
+
+const renderedContent = computed(() => renderMarkdown(post.value?.content ?? ''))
+const tocItems = computed(() => extractTocItems(post.value?.content ?? ''))
 </script>
 
 <template>
@@ -157,35 +200,7 @@ const tocItems = computed(() => parsedContent.value.toc)
           </ol>
         </nav>
 
-        <div class="py-8 text-lg leading-9 text-slate-700 dark:text-slate-300">
-          <template v-for="(block, index) in contentBlocks" :key="block.type === 'space' ? block.id : `${block.type}-${index}`">
-            <h2
-              v-if="block.type === 'heading' && block.level === 2"
-              :id="block.id"
-              class="scroll-mt-24 pt-8 text-3xl font-bold leading-tight text-slate-950 dark:text-white"
-            >
-              {{ block.text }}
-            </h2>
-            <h3
-              v-else-if="block.type === 'heading' && block.level === 3"
-              :id="block.id"
-              class="scroll-mt-24 pt-6 text-2xl font-bold leading-tight text-slate-950 dark:text-white"
-            >
-              {{ block.text }}
-            </h3>
-            <h4
-              v-else-if="block.type === 'heading' && block.level === 4"
-              :id="block.id"
-              class="scroll-mt-24 pt-5 text-xl font-bold leading-tight text-slate-950 dark:text-white"
-            >
-              {{ block.text }}
-            </h4>
-            <div v-else-if="block.type === 'space'" class="h-4" />
-            <p v-else class="whitespace-pre-wrap">
-              {{ block.text }}
-            </p>
-          </template>
-        </div>
+        <div class="markdown-body py-8" v-html="renderedContent" />
       </article>
 
       <aside v-if="tocItems.length" class="hidden lg:block">
