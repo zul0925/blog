@@ -9,13 +9,15 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'zh-CN'
       },
-      titleTemplate: (title) => title ? `${title} | 渐晚` : '渐晚',
+      titleTemplate: (title) => title ? `${title} | 渐晚Blog` : '渐晚Blog',
       meta: [
         { name: 'theme-color', content: '#2563eb' },
         { name: 'robots', content: 'index, follow' }
       ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/logo-jianwan.png' }
+        { rel: 'icon', type: 'image/png', href: '/logo-jianwan.png' },
+        { rel: 'shortcut icon', type: 'image/png', href: '/logo-jianwan.png' },
+        { rel: 'apple-touch-icon', href: '/logo-jianwan.png' }
       ]
     }
   },
