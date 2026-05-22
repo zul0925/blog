@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const isDark = ref(false)
+const githubUrl = 'https://github.com/zul0925/blog'
 
 const applyTheme = (value: boolean) => {
   document.documentElement.classList.toggle('dark', value)
@@ -46,14 +47,27 @@ watch(isDark, (value) => {
           </NuxtLink>
         </nav>
 
-        <button
-          class="inline-flex h-10 min-w-16 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-900"
-          type="button"
-          :aria-label="isDark ? '切换到浅色模式' : '切换到深色模式'"
-          @click="isDark = !isDark"
-        >
-          {{ isDark ? 'Light' : 'Dark' }}
-        </button>
+        <div class="flex items-center gap-2">
+          <a
+            class="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-900 dark:hover:text-blue-300"
+            :href="githubUrl"
+            aria-label="打开 GitHub 仓库"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <UIcon class="size-5" name="i-lucide-github" />
+          </a>
+
+          <button
+            class="inline-flex size-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-blue-900 dark:hover:text-blue-300"
+            type="button"
+            :aria-label="isDark ? '切换到浅色模式' : '切换到深色模式'"
+            @click="isDark = !isDark"
+          >
+            <UIcon v-if="isDark" class="size-5" name="i-lucide-sun" />
+            <UIcon v-else class="size-5" name="i-lucide-moon" />
+          </button>
+        </div>
       </div>
     </header>
 
