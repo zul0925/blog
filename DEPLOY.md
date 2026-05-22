@@ -427,9 +427,10 @@ jobs:
           script: |
             set -e
 
+            git config --global --add safe.directory /www/wwwroot/blog
+
             cd /www/wwwroot/blog
 
-            git config --global --add safe.directory /www/wwwroot/blog
             git fetch origin master
             git reset --hard origin/master
 
