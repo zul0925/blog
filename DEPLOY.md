@@ -456,6 +456,7 @@ jobs:
             yarn install --frozen-lockfile
             find node_modules -path '*/@esbuild/linux-x64/bin/esbuild' -type f -exec chmod +x {} \;
             yarn db:migrate
+            rm -rf .output
 
       - name: Upload build output
         uses: appleboy/scp-action@v0.1.7
@@ -466,7 +467,7 @@ jobs:
           port: ${{ secrets.ALIYUN_PORT }}
           source: ".output"
           target: "/www/wwwroot/blog"
-          rm: true
+          overwrite: true
 
       - name: Restart server
         uses: appleboy/ssh-action@v1.2.0
