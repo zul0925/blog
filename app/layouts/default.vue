@@ -45,6 +45,9 @@ watch(isDark, (value) => {
           <NuxtLink class="rounded-lg px-3 py-2 hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900" to="/posts">
             文章
           </NuxtLink>
+          <NuxtLink class="rounded-lg px-3 py-2 hover:bg-white hover:text-blue-600 dark:hover:bg-slate-900" to="/tags">
+            标签
+          </NuxtLink>
         </nav>
 
         <div class="flex items-center gap-2">

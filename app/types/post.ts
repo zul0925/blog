@@ -6,6 +6,8 @@ export type Post = {
   slug: string
   excerpt: string | null
   content: string
+  tags: string[]
+  isOriginal: boolean
   status: PostStatus
   createdAt: string
   updatedAt: string
@@ -25,4 +27,13 @@ export type PostsResponse = {
 
 export type PostResponse = {
   data: Post
+}
+
+export type TagSummary = {
+  name: string
+  count: number
+}
+
+export type TagsResponse = {
+  data: TagSummary[]
 }

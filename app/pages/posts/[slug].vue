@@ -171,6 +171,7 @@ const tocItems = computed(() => extractTocItems(post.value?.content ?? ''))
         <header class="mt-8 border-b border-slate-200 pb-8 dark:border-slate-800">
           <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
             <span class="font-semibold text-blue-600 dark:text-blue-300">{{ post.status === 'published' ? 'Published' : 'Draft' }}</span>
+            <span>{{ post.isOriginal ? '原创' : '转载' }}</span>
             <span>{{ formatDate(post.updatedAt) }}</span>
           </div>
           <h1 class="mt-5 text-4xl font-bold leading-tight text-slate-950 dark:text-white sm:text-5xl">
@@ -179,6 +180,15 @@ const tocItems = computed(() => extractTocItems(post.value?.content ?? ''))
           <p class="mt-5 text-lg leading-8 text-slate-600 dark:text-slate-300">
             {{ post.excerpt || '这篇文章暂时没有摘要。' }}
           </p>
+          <div v-if="post.tags.length" class="mt-5 flex flex-wrap gap-2">
+            <span
+              v-for="tag in post.tags"
+              :key="tag"
+              class="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            >
+              {{ tag }}
+            </span>
+          </div>
         </header>
 
         <nav v-if="tocItems.length" class="mt-8 rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:hidden" aria-label="文章大纲">

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, ne, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { posts } from '../db/schema'
 import { useDb } from '../db'
 import type { PostCreateInput, PostListQuery, PostUpdateInput } from '../../shared/schemas/post.schema'
@@ -59,9 +59,17 @@ const createUniqueSlug = async (title: string, preferredSlug?: string, excludeId
 
 export const listPosts = async (query: PostListQuery) => {
   const db = useDb()
+  const searchFilter = query.q
+    ? or(
+        ilike(posts.title, `%${query.q}%`),
+        ilike(posts.excerpt, `%${query.q}%`),
+        ilike(posts.content, `%${query.q}%`)
+      )
+    : undefined
   const filters = [
     query.status ? eq(posts.status, query.status) : undefined,
-    query.q ? ilike(posts.title, `%${query.q}%`) : undefined
+    searchFilter,
+    query.tag ? sql`${query.tag} = any(${posts.tags})` : undefined
   ].filter(Boolean)
 
   const where = filters.length ? and(...filters) : undefined
@@ -83,6 +91,25 @@ export const listPosts = async (query: PostListQuery) => {
     data,
     total: totalResult?.total ?? 0
   }
+}
+
+export const listTags = async () => {
+  const db = useDb()
+  const rows = await db.execute<{
+    name: string
+    count: string
+  }>(sql`
+    select tag as name, count(*)::int as count
+    from ${posts}, unnest(${posts.tags}) as tag
+    where ${posts.status} = 'published'
+    group by tag
+    order by count desc, tag asc
+  `)
+
+  return rows.map((row) => ({
+    name: row.name,
+    count: Number(row.count)
+  }))
 }
 
 export const getPostById = async (id: number) => {

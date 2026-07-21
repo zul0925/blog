@@ -1,4 +1,5 @@
-import { pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { boolean, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core'
 
 export const posts = pgTable('posts', {
   id: serial('id').primaryKey(),
@@ -6,6 +7,8 @@ export const posts = pgTable('posts', {
   slug: varchar('slug', { length: 200 }).notNull().unique(),
   excerpt: text('excerpt'),
   content: text('content').notNull(),
+  tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+  isOriginal: boolean('is_original').notNull().default(true),
   status: varchar('status', { length: 20 }).notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()

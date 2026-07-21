@@ -5,11 +5,19 @@ definePageMeta({
   layout: 'admin'
 })
 
+const { renderMarkdown } = useMarkdownRenderer()
+
 const title = ref('')
 const excerpt = ref('')
 const content = ref('')
+const tags = ref<string[]>([])
+const isOriginal = ref(true)
 const pending = ref(false)
 const errorMessage = ref('')
+
+const previewHtml = computed(() => renderMarkdown(content.value))
+const wordCount = computed(() => content.value.trim().replace(/\s+/g, '').length)
+const readingMinutes = computed(() => Math.max(1, Math.ceil(wordCount.value / 500)))
 
 const savePost = async (nextStatus: PostStatus) => {
   pending.value = true
@@ -22,6 +30,8 @@ const savePost = async (nextStatus: PostStatus) => {
         title: title.value,
         excerpt: excerpt.value || null,
         content: content.value,
+        tags: tags.value,
+        isOriginal: isOriginal.value,
         status: nextStatus
       }
     })
@@ -40,7 +50,7 @@ const savePost = async (nextStatus: PostStatus) => {
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold text-slate-950">新建文章</h1>
-        <p class="mt-2 text-slate-500">填写标题和正文即可，文章链接会自动生成。</p>
+        <p class="mt-2 text-slate-500">填写标题、摘要、标签和 Markdown 正文，右侧可以实时预览。</p>
       </div>
       <NuxtLink class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700" to="/admin/posts">
         返回列表
@@ -51,7 +61,7 @@ const savePost = async (nextStatus: PostStatus) => {
       {{ errorMessage }}
     </p>
 
-    <form class="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]" @submit.prevent="savePost('draft')">
+    <form class="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]" @submit.prevent="savePost('draft')">
       <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div class="border-b border-slate-100 px-5 py-4">
           <h2 class="font-bold text-slate-950">文章内容</h2>
@@ -66,27 +76,57 @@ const savePost = async (nextStatus: PostStatus) => {
             <textarea v-model="excerpt" class="min-h-28 resize-y rounded-lg border border-slate-200 p-3 font-normal outline-none focus:border-blue-400" placeholder="用于列表页和 SEO 的简短摘要" />
           </label>
           <label class="grid gap-2 text-sm font-bold text-slate-700">
+            标签
+            <UInputTags
+              v-model="tags"
+              class="w-full"
+              placeholder="输入标签后回车"
+            />
+          </label>
+          <label class="grid gap-2 text-sm font-bold text-slate-700">
             正文 Markdown
-            <textarea v-model="content" class="min-h-80 resize-y rounded-lg border border-slate-200 p-3 font-normal outline-none focus:border-blue-400" placeholder="# 从这里开始写作" />
+            <textarea v-model="content" class="min-h-[32rem] resize-y rounded-lg border border-slate-200 p-3 font-mono text-sm font-normal leading-7 outline-none focus:border-blue-400" placeholder="# 从这里开始写作" />
           </label>
         </div>
       </section>
 
-      <aside class="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-100 px-5 py-4">
-          <h2 class="font-bold text-slate-950">发布设置</h2>
-        </div>
-        <div class="grid gap-4 p-5">
-          <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
-            系统会根据标题自动生成文章访问地址，重复时会自动追加编号。
+      <aside class="grid gap-4 self-start">
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-100 px-5 py-4">
+            <h2 class="font-bold text-slate-950">发布设置</h2>
           </div>
-          <button class="h-10 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="pending" type="button" @click="savePost('draft')">
-            {{ pending ? '保存中...' : '保存草稿' }}
-          </button>
-          <button class="h-10 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="pending" type="button" @click="savePost('published')">
-            发布文章
-          </button>
-        </div>
+          <div class="grid gap-4 p-5">
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <span class="block text-slate-500">字数</span>
+                <strong class="mt-1 block text-slate-950">{{ wordCount }}</strong>
+              </div>
+              <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <span class="block text-slate-500">预计阅读</span>
+                <strong class="mt-1 block text-slate-950">{{ readingMinutes }} 分钟</strong>
+              </div>
+            </div>
+            <label class="flex items-center justify-between gap-4 rounded-lg border border-slate-200 p-3 text-sm font-bold text-slate-700">
+              <span>{{ isOriginal ? '原创' : '转载' }}</span>
+              <USwitch v-model="isOriginal" />
+            </label>
+            <button class="h-10 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="pending" type="button" @click="savePost('draft')">
+              {{ pending ? '保存中...' : '保存草稿' }}
+            </button>
+            <button class="h-10 rounded-lg border border-slate-200 px-4 text-sm font-bold text-slate-600 hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-60" :disabled="pending" type="button" @click="savePost('published')">
+              发布文章
+            </button>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-100 px-5 py-4">
+            <h2 class="font-bold text-slate-950">实时预览</h2>
+          </div>
+          <div class="max-h-[44rem] overflow-y-auto p-5">
+            <div class="markdown-body markdown-preview" v-html="previewHtml" />
+          </div>
+        </section>
       </aside>
     </form>
   </section>
