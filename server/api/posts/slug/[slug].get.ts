@@ -1,4 +1,4 @@
-import { getPostBySlug } from '../../../services/post.service'
+import { getAdjacentPosts, getPostBySlug, getRelatedPosts } from '../../../services/post.service'
 
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
@@ -11,8 +11,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const data = await getPostBySlug(slug)
+  const [{ prev, next }, related] = await Promise.all([
+    getAdjacentPosts(data),
+    getRelatedPosts(data)
+  ])
 
   return {
-    data
+    data,
+    prev,
+    next,
+    related
   }
 })

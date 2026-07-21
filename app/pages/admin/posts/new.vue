@@ -15,7 +15,31 @@ const isOriginal = ref(true)
 const pending = ref(false)
 const errorMessage = ref('')
 
-const previewHtml = computed(() => renderMarkdown(content.value))
+const previewHtml = ref('')
+let previewTimer: ReturnType<typeof setTimeout> | undefined
+
+const updatePreview = (value: string) => {
+  if (previewTimer) {
+    clearTimeout(previewTimer)
+  }
+
+  previewTimer = setTimeout(async () => {
+    try {
+      previewHtml.value = await renderMarkdown(value)
+    } catch {
+      previewHtml.value = ''
+    }
+  }, 250)
+}
+
+watch(content, (value) => updatePreview(value), { immediate: true })
+
+onUnmounted(() => {
+  if (previewTimer) {
+    clearTimeout(previewTimer)
+  }
+})
+
 const wordCount = computed(() => content.value.trim().replace(/\s+/g, '').length)
 const readingMinutes = computed(() => Math.max(1, Math.ceil(wordCount.value / 500)))
 

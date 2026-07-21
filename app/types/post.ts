@@ -29,6 +29,28 @@ export type PostResponse = {
   data: Post
 }
 
+export type PostNavigation = {
+  id: number
+  title: string
+  slug: string
+  updatedAt: string
+}
+
+export type PostSummary = {
+  id: number
+  title: string
+  slug: string
+  excerpt: string | null
+  updatedAt: string
+}
+
+export type PostDetailResponse = {
+  data: Post
+  prev: PostNavigation | null
+  next: PostNavigation | null
+  related: PostSummary[]
+}
+
 export type TagSummary = {
   name: string
   count: number

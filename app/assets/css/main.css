@@ -209,6 +209,29 @@ html.dark {
   color: inherit;
 }
 
+/* Shiki 代码高亮：defaultColor:false 只输出 CSS 变量，这里按浅/深色模式取值 */
+.markdown-body .shiki {
+  background-color: var(--shiki-light-bg);
+  color: var(--shiki-light);
+}
+
+.markdown-body .shiki span {
+  color: var(--shiki-light);
+}
+
+.dark .markdown-body .shiki {
+  background-color: var(--shiki-dark-bg);
+  color: var(--shiki-dark);
+}
+
+.dark .markdown-body .shiki span {
+  color: var(--shiki-dark);
+}
+
+.markdown-body .shiki .line {
+  display: block;
+}
+
 .markdown-body table {
   display: block;
   width: 100%;
@@ -256,4 +279,21 @@ html.dark {
 .markdown-body img {
   max-width: 100%;
   border-radius: 0.5rem;
+}
+
+.markdown-preview {
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5rem;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25rem;
+}
+
+.markdown-preview h4 {
+  font-size: 1.125rem;
 }

@@ -17,7 +17,8 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/png', href: '/logo-jianwan.png' },
         { rel: 'shortcut icon', type: 'image/png', href: '/logo-jianwan.png' },
-        { rel: 'apple-touch-icon', href: '/logo-jianwan.png' }
+        { rel: 'apple-touch-icon', href: '/logo-jianwan.png' },
+        { rel: 'alternate', type: 'application/rss+xml', title: '渐晚Blog RSS', href: '/rss.xml' }
       ]
     }
   },

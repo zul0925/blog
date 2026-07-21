@@ -1,21 +1,31 @@
 <script setup lang="ts">
-import { Renderer, lexer, marked, type Token, type Tokens } from 'marked'
-import type { PostResponse } from '~/types/post'
-
-type TocItem = {
-  id: string
-  level: 2 | 3 | 4
-  text: string
-}
+import type { PostDetailResponse } from '~/types/post'
+import type { TocItem } from '~/composables/useMarkdownRenderer'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
+const { renderArticleMarkdown } = useMarkdownRenderer()
 
-const { data: postResponse } = await useAsyncData(`post-${slug.value}`, () =>
-  $fetch<PostResponse>(`/api/posts/slug/${slug.value}`)
-)
+const { data } = await useAsyncData(`post-${slug.value}`, async () => {
+  const response = await $fetch<PostDetailResponse>(`/api/posts/slug/${slug.value}`)
+  const { html, toc } = await renderArticleMarkdown(response.data.content)
 
-const post = computed(() => postResponse.value?.data)
+  return {
+    post: response.data,
+    prev: response.prev,
+    next: response.next,
+    related: response.related,
+    html,
+    toc
+  }
+})
+
+const post = computed(() => data.value?.post)
+const prev = computed(() => data.value?.prev ?? null)
+const next = computed(() => data.value?.next ?? null)
+const related = computed(() => data.value?.related ?? [])
+const renderedContent = computed(() => data.value?.html ?? '')
+const tocItems = computed(() => (data.value?.toc ?? []) as TocItem[])
 
 if (!post.value) {
   throw createError({
@@ -37,127 +47,6 @@ const formatDate = (value: string) =>
     month: '2-digit',
     day: '2-digit'
   }).format(new Date(value))
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-
-const escapeAttribute = (value: string) => escapeHtml(value).replace(/`/g, '&#96;')
-
-const isSafeUrl = (value: string) => {
-  if (!value) {
-    return false
-  }
-
-  if (value.startsWith('/') || value.startsWith('#')) {
-    return true
-  }
-
-  try {
-    return ['http:', 'https:', 'mailto:'].includes(new URL(value).protocol)
-  } catch {
-    return false
-  }
-}
-
-const normalizeHeadingText = (value: string) =>
-  value
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .trim()
-
-const flattenText = (tokens: Token[] = []): string =>
-  tokens
-    .map((token) => {
-      if ('tokens' in token && Array.isArray(token.tokens)) {
-        return flattenText(token.tokens)
-      }
-
-      if ('text' in token && typeof token.text === 'string') {
-        return token.text
-      }
-
-      return ''
-    })
-    .join('')
-
-const extractTocItems = (content: string) => {
-  const toc: TocItem[] = []
-  const tokens = lexer(content, {
-    gfm: true
-  })
-
-  tokens.forEach((token) => {
-    if (token.type === 'heading') {
-      const heading = token as Tokens.Heading
-      const level = Math.min(Math.max(heading.depth, 2), 4) as 2 | 3 | 4
-      const text = normalizeHeadingText(flattenText(heading.tokens) || heading.text)
-
-      toc.push({
-        id: `section-${toc.length + 1}`,
-        level,
-        text
-      })
-    }
-  })
-
-  return toc
-}
-
-const renderMarkdown = (content: string) => {
-  const renderer = new Renderer()
-  let headingIndex = 0
-
-  renderer.heading = function ({ tokens, depth }) {
-    const level = Math.min(Math.max(depth, 2), 4)
-    const id = `section-${headingIndex + 1}`
-    const text = this.parser.parseInline(tokens)
-
-    headingIndex += 1
-
-    return `<h${level} id="${id}">${text}</h${level}>`
-  }
-
-  renderer.html = ({ text }) => escapeHtml(text)
-
-  renderer.link = function ({ href, title, tokens }) {
-    if (!isSafeUrl(href)) {
-      return this.parser.parseInline(tokens)
-    }
-
-    const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : ''
-    const isExternal = /^https?:\/\//i.test(href)
-    const targetAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : ''
-
-    return `<a href="${escapeAttribute(href)}"${titleAttribute}${targetAttributes}>${this.parser.parseInline(tokens)}</a>`
-  }
-
-  renderer.image = ({ href, title, text }) => {
-    if (!isSafeUrl(href)) {
-      return escapeHtml(text)
-    }
-
-    const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : ''
-
-    return `<img src="${escapeAttribute(href)}" alt="${escapeAttribute(text)}"${titleAttribute}>`
-  }
-
-  return marked(content, {
-    async: false,
-    breaks: true,
-    gfm: true,
-    renderer
-  })
-}
-
-const renderedContent = computed(() => renderMarkdown(post.value?.content ?? ''))
-const tocItems = computed(() => extractTocItems(post.value?.content ?? ''))
 </script>
 
 <template>
@@ -211,6 +100,48 @@ const tocItems = computed(() => extractTocItems(post.value?.content ?? ''))
         </nav>
 
         <div class="markdown-body py-8" v-html="renderedContent" />
+
+        <nav v-if="prev || next" class="mt-4 grid gap-4 border-t border-slate-200 pt-8 sm:grid-cols-2 dark:border-slate-800" aria-label="文章导航">
+          <NuxtLink
+            v-if="prev"
+            class="group rounded-lg border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-900"
+            :to="`/posts/${prev.slug}`"
+          >
+            <span class="text-xs font-bold text-slate-400 dark:text-slate-500">← 上一篇</span>
+            <span class="mt-1 block font-bold leading-snug text-slate-950 group-hover:text-blue-700 dark:text-white dark:group-hover:text-blue-300">
+              {{ prev.title }}
+            </span>
+          </NuxtLink>
+          <span v-else class="hidden sm:block" />
+
+          <NuxtLink
+            v-if="next"
+            class="group rounded-lg border border-slate-200 bg-white p-4 text-right transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm sm:col-start-2 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-900"
+            :to="`/posts/${next.slug}`"
+          >
+            <span class="text-xs font-bold text-slate-400 dark:text-slate-500">下一篇 →</span>
+            <span class="mt-1 block font-bold leading-snug text-slate-950 group-hover:text-blue-700 dark:text-white dark:group-hover:text-blue-300">
+              {{ next.title }}
+            </span>
+          </NuxtLink>
+        </nav>
+
+        <section v-if="related.length" class="mt-12 border-t border-slate-200 pt-8 dark:border-slate-800">
+          <h2 class="text-sm font-bold text-slate-950 dark:text-white">相关文章</h2>
+          <div class="mt-4 grid gap-4 sm:grid-cols-3">
+            <NuxtLink
+              v-for="item in related"
+              :key="item.id"
+              class="group rounded-lg border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-900"
+              :to="`/posts/${item.slug}`"
+            >
+              <span class="text-xs text-slate-400 dark:text-slate-500">{{ formatDate(item.updatedAt) }}</span>
+              <span class="mt-1 block font-bold leading-snug text-slate-950 group-hover:text-blue-700 dark:text-white dark:group-hover:text-blue-300">
+                {{ item.title }}
+              </span>
+            </NuxtLink>
+          </div>
+        </section>
       </article>
 
       <aside v-if="tocItems.length" class="hidden lg:block">
