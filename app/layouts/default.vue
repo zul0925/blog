@@ -76,13 +76,13 @@ watch(isDark, (value) => {
     <footer class="border-t border-slate-200 bg-white/60 py-8 dark:border-slate-800 dark:bg-slate-950">
       <div class="mx-auto flex max-w-6xl flex-col gap-3 px-5 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <span>© 2026 渐晚. Built with Nuxt.</span>
-        <span>持续记录工程、产品和全栈开发实践。</span>
         <a
           class="transition hover:text-blue-600 dark:hover:text-blue-300"
           href="https://beian.miit.gov.cn/"
           rel="noopener noreferrer"
           target="_blank"
         >闽ICP备2023019392号</a>
+        <span>持续记录工程、产品和全栈开发实践。</span>
       </div>
     </footer>
   </div>
