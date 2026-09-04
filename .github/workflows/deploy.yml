@@ -32,6 +32,7 @@ jobs:
           username: ${{ secrets.ALIYUN_USER }}
           key: ${{ secrets.ALIYUN_SSH_KEY }}
           port: ${{ secrets.ALIYUN_PORT }}
+          command_timeout: 20m
           script: |
             set -e
 
@@ -47,7 +48,7 @@ jobs:
               git remote set-url origin https://github.com/zul0925/blog.git
             fi
 
-            git fetch origin master
+            git fetch origin master || { sleep 15; git fetch origin master; }
             git reset --hard origin/master
 
             if [ ! -f .env ]; then
